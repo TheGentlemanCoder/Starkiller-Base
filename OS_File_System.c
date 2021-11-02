@@ -42,7 +42,24 @@ void OS_FS_Init(void){
 // Outputs: number of a new file 
 // Errors: return 255 on failure or disk full
 uint8_t OS_File_New(void){
- 
+	uint8_t new_file_number = 255;
+	uint8_t next_free_sector_index = find_free_sector();
+	
+	if (next_free_sector_index != 255) {
+		// disk not full
+		for (int i = 0; i < 255; ++i)
+		{
+			if (RAM_Directory[i] == 255) {
+				// directory not full
+				new_file_number = i;
+				
+				// update directory
+				RAM_Directory[i] = next_free_sector_index;
+				break;
+			}
+		}
+	}
+	return new_file_number;
 }
 
 
@@ -52,7 +69,18 @@ uint8_t OS_File_New(void){
 // Outputs: 0 if empty, otherwise the number of sectors 
 // Errors: none 
 uint8_t OS_File_Size(uint8_t num){
- 
+	uint8_t ptr = RAM_Directory[num];
+	uint8_t size = 0;
+
+	while (ptr != 255) {
+		// one more sector in file
+		++size;
+		
+		// find next sector in file
+		ptr = RAM_FAT[ptr];
+	}
+	
+	return size;
 }
 
 //******** OS_File_Append************* 
@@ -68,7 +96,16 @@ uint8_t OS_File_Append(uint8_t num, uint8_t buf[512]){
 // Helper function find_free_sector returns the logical 
 // address of the first free sector
 uint8_t find_free_sector(void){
-
+	uint8_t free_sector_index = 255;
+	
+	for (int i = 0; i < 255; ++i) {
+		if (RAM_FAT[i] == 255) {
+			free_sector_index = i;
+			break;
+		}
+	}
+	
+	return free_sector_index;
 }
 
 // Helper function last_sector returns the logical address
