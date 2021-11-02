@@ -69,7 +69,18 @@ uint8_t OS_File_New(void){
 // Outputs: 0 if empty, otherwise the number of sectors 
 // Errors: none 
 uint8_t OS_File_Size(uint8_t num){
- 
+	uint8_t ptr = RAM_Directory[num];
+	uint8_t size = 0;
+
+	while (ptr != 255) {
+		// one more sector in file
+		++size;
+		
+		// find next sector in file
+		ptr = RAM_FAT[ptr];
+	}
+	
+	return size;
 }
 
 //******** OS_File_Append************* 
