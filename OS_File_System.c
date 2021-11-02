@@ -171,8 +171,8 @@ uint8_t eDisk_WriteSector(uint8_t buf[512], uint8_t n){
 		// byte 3 in MSB (highest address)
 		little_endian_val |= buf[4 * i + 3] & 0xFF000000;
 		
-		// write value to disk
-		Flash_Write(physical_address, little_endian_val);
+		// write value to disk and check if an error occurred
+		retVal |= Flash_Write(physical_address, little_endian_val);
 		
 		// increment physical address to next 32-bit word
 		physical_address += 4;
