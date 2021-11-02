@@ -1,3 +1,6 @@
+void LED_Init(void);
+void LED_Red(void);
+void LED_Green(void);
 void OS_FS_Init(void);
 uint8_t OS_File_New( void);
 uint8_t OS_File_Size(uint8_t);
