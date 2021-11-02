@@ -90,7 +90,18 @@ uint8_t OS_File_Size(uint8_t num){
 // Outputs: 0 if successful 
 // Errors: 255 on failure or disk full 
 uint8_t OS_File_Append(uint8_t num, uint8_t buf[512]){
- 
+	uint8_t new_sector = find_free_sector();
+	uint8_t retVal = 0;
+	
+	if (new_sector != 255) {
+		// at least one sector still available
+		eDisk_WriteSector(buf, new_sector);
+	} else {
+		// new_sector == 255, disk full
+		retVal = new_sector;
+	}
+	
+	return retVal;
 }
 
 // Helper function find_free_sector returns the logical 
