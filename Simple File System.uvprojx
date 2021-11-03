@@ -399,16 +399,6 @@
               <FileType>5</FileType>
               <FilePath>.\FlashProgram.h</FilePath>
             </File>
-            <File>
-              <FileName>tm4c123gh6pm_def.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\tm4c123gh6pm_def.h</FilePath>
-            </File>
-            <File>
-              <FileName>OS_File_System.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\OS_File_System.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

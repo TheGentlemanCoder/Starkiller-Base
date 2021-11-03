@@ -158,7 +158,11 @@ uint8_t find_free_sector(void){
 // Helper function last_sector returns the logical address
 // of the last sector assigned to the file whose number is 'start'
 uint8_t last_sector(uint8_t start){
-
+	uint8_t ptr = RAM_Directory[start];
+	while(RAM_FAT[ptr] != 255){
+			ptr = RAM_FAT[ptr];
+	}
+	return ptr;
 }
 
 
@@ -223,8 +227,21 @@ uint8_t eDisk_WriteSector(uint8_t buf[512], uint8_t n){
 //         buf, pointer to 512 empty spaces in RAM 
 // Outputs: 0 if successful 
 // Errors: 255 on failure because no data 
-uint8_t OS_File_Read( uint8_t num, uint8_t location, uint8_t buf[ 512]){
- 
+uint8_t OS_File_Read( uint8_t num, uint8_t location, uint8_t buf[512]){
+	uint8_t ptr = RAM_Directory[num];
+	ptr = RAM_FAT[ptr];
+	for(int i = 0; i<location ; i++){
+			if(ptr == 255){
+				return ptr;
+			}
+			ptr = RAM_FAT[ptr];
+	}
+
+	uint8_t* sectorReadStart = (uint8_t*) Disk_Start_Address+(ptr*4);
+	for(int i = 0; i<512; i++){
+		buf[i] = *(sectorReadStart+i);
+	}
+	return 0;
 }
 
 //******** OS_File_Format************* 
@@ -249,7 +266,16 @@ uint8_t OS_File_Format( void){
 // Inputs: none 
 // Outputs: 0 if success 
 // Errors: 255 on disk write failure 
-uint8_t OS_File_Flush( void){
+uint8_t OS_File_Flush(void){
+  uint32_t endOfDisk = 0x0003FFFF; 
+	uint8_t* sectorWriteStart = (uint8_t*) endOfDisk;
+	for(int i = 0; i<255; i++){
+		*(sectorWriteStart+i) = RAM_Directory[i];
+	}
+	for(int i = 0; i<255; i++){
+		*(sectorWriteStart+i) = RAM_FAT[i];
+	}
+	return 0;
 }
 
 
