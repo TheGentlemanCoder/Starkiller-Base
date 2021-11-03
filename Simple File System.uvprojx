@@ -10,6 +10,7 @@
       <TargetName>Target 1</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060422::V5.06 update 4 (build 422)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>TM4C123GH6PM</Device>
@@ -377,6 +378,28 @@
       <Groups>
         <Group>
           <GroupName>Source Group 1</GroupName>
+          <Files>
+            <File>
+              <FileName>FlashProgram.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\FlashProgram.c</FilePath>
+            </File>
+            <File>
+              <FileName>OS_File_System.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\OS_File_System.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_File_System.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Test_File_System.c</FilePath>
+            </File>
+            <File>
+              <FileName>FlashProgram.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\FlashProgram.h</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>::CMSIS</GroupName>
