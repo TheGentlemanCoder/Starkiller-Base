@@ -144,20 +144,50 @@ uint8_t OS_File_Append(uint8_t num, uint8_t buf[512]){
 // address of the first free sector
 uint8_t find_free_sector(void){
 	uint8_t free_sector_index = 255;
+	uint8_t highest_file_sector = 0;
 	
-	for (int i = 0; i < 255; ++i) {
-		if (RAM_FAT[i] == 255) {
-			free_sector_index = i;
+	// get number of files in disk
+	uint8_t num_files = 0;
+	uint8_t file_num;
+	for (file_num = 0; file_num < 255; ++file_num) {
+		if (RAM_Directory[file_num] != 255) {
+			++num_files;
+		} else {
 			break;
 		}
 	}
 	
+	if (num_files == 0) {
+		// special case: no files yet, so we return first sector
+		return 0;
+	}
+	
+	uint8_t ptr;
+	
+	for (file_num = 0; file_num < num_files; ++file_num) {
+		// step through file until we reach the end
+		ptr = RAM_Directory[file_num];
+		
+		while (RAM_FAT[ptr] != 255) {
+			if (ptr > highest_file_sector) {
+				highest_file_sector = ptr;
+			}
+			
+			// move to next sector
+			ptr = RAM_FAT[ptr];
+		}
+	}
+	
+	// return the sector immediately following
+	// the last claimed sector on the disk
+	free_sector_index = highest_file_sector + 1; 
 	return free_sector_index;
 }
 
 // Helper function last_sector returns the logical address
 // of the last sector assigned to the file whose number is 'start'
 uint8_t last_sector(uint8_t start){
+	// files must occupy at least one sector
 	uint8_t ptr = RAM_Directory[start];
 	while(RAM_FAT[ptr] != 255){
 			ptr = RAM_FAT[ptr];
