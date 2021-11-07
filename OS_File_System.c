@@ -239,13 +239,13 @@ uint8_t eDisk_WriteSector(uint8_t buf[512], uint8_t n){
 		little_endian_val = 0;
 		
 		// byte 0 in LSB (lowest address)
-		little_endian_val |= buf[4 * i + 0] & 0x000000FF;
+		little_endian_val |=  buf[4 * i + 0] & 0x000000FF;
 		// byte 1
-		little_endian_val |= buf[4 * i + 1] & 0x0000FF00;
+		little_endian_val |= (buf[4 * i + 1] << 8) & 0x0000FF00;
 		// byte 2
-		little_endian_val |= buf[4 * i + 2] & 0x00FF0000;
+		little_endian_val |= (buf[4 * i + 2] << 16) & 0x00FF0000;
 		// byte 3 in MSB (highest address)
-		little_endian_val |= buf[4 * i + 3] & 0xFF000000;
+		little_endian_val |= (buf[4 * i + 3] << 24) & 0xFF000000;
 		
 		// write value to disk and check if an error occurred
 		retVal |= Flash_Write(physical_address, little_endian_val);
