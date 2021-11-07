@@ -74,22 +74,15 @@ void OS_FS_Init(void){
 // Errors: return 255 on failure or disk full
 uint8_t OS_File_New(void){
 	uint8_t new_file_number = 255;
-	uint8_t next_free_sector_index = find_free_sector();
-	
-	if (next_free_sector_index != 255) {
-		// disk not full
-		for (int i = 0; i < 255; ++i)
-		{
-			if (RAM_Directory[i] == 255) {
-				// directory not full
-				new_file_number = i;
-				
-				// update directory
-				RAM_Directory[i] = next_free_sector_index;
-				break;
-			}
+	for (int i = 0; i < 255; ++i)
+	{
+		if (RAM_Directory[i] == 255) {
+			// directory not full
+			new_file_number = i;
+			break;
 		}
 	}
+	
 	return new_file_number;
 }
 
@@ -122,27 +115,19 @@ uint8_t OS_File_Size(uint8_t num){
 // Errors: 255 on failure or disk full 
 uint8_t OS_File_Append(uint8_t num, uint8_t buf[512]){
 	LED_Red();
-	
 	uint8_t retVal = 0;
 	uint8_t file_first_sector = RAM_Directory[num];
+	uint8_t next_free_sector = find_free_sector();
 	
-	if (RAM_FAT[file_first_sector] == 255) {
-		// file has not been written to yet, write data to first sector
-		retVal = eDisk_WriteSector(buf, file_first_sector);
-		return retVal;
-	}
-	
-	uint8_t new_sector = find_free_sector();
-	
-	if (new_sector != 255) {
+	if (next_free_sector == 255) {
+		// disk is full
+		retVal = 255;
+	} else {
 		// at least one sector still available
-		retVal = eDisk_WriteSector(buf, new_sector);
+		retVal = eDisk_WriteSector(buf, next_free_sector);
 		
 		// update FAT
-		append_fat(num, new_sector);
-	} else {
-		// new_sector == 255, disk full
-		retVal = new_sector;
+		append_fat(num, next_free_sector);
 	}
 	
 	LED_Green();
@@ -190,6 +175,15 @@ uint8_t find_free_sector(void){
 	// return the sector immediately following
 	// the last claimed sector on the disk
 	free_sector_index = highest_file_sector + 1; 
+	
+	for (file_num = 0; file_num < num_files; ++file_num) {
+		// ensure that this sector is referenced by a file in the directory
+		if (RAM_Directory[file_num] == free_sector_index) {
+			// increment to the next sector - if that sector is also referenced,
+			// it will be in order of file creation, so next iteration will take care of it
+			++free_sector_index;
+		}
+	}
 	return free_sector_index;
 }
 
@@ -209,12 +203,25 @@ uint8_t last_sector(uint8_t start){
 // the sector with logical address n to the sectors of file
 // num
 void append_fat(uint8_t num, uint8_t n){
-	uint8_t penultimate_file_sector = last_sector(num);
-
-	// make previous last sector point to new last sector
-	RAM_FAT[penultimate_file_sector] = n;
-	// update last sector FAT entry to indicate that its the last sector
-	RAM_FAT[num] = 255;
+	// get first sector pointed to by directory entry 
+	uint8_t ptr = RAM_Directory[num];
+	uint8_t prev_ptr; // cache the last pointer used while iterating
+	
+	if (ptr == 255) {
+		// first write to file, no need to update FAT
+		RAM_Directory[num] = n;
+	} else {
+		prev_ptr = ptr;
+		ptr = RAM_FAT[ptr];
+		
+		while (ptr != 255) {
+			prev_ptr = ptr;
+			ptr = RAM_FAT[ptr];
+		}
+		
+		// make previous last sector point to new last sector
+		RAM_FAT[prev_ptr] = n;
+	}
 }
 
 
