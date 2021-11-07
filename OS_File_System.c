@@ -122,12 +122,21 @@ uint8_t OS_File_Size(uint8_t num){
 // Errors: 255 on failure or disk full 
 uint8_t OS_File_Append(uint8_t num, uint8_t buf[512]){
 	LED_Red();
-	uint8_t new_sector = find_free_sector();
+	
 	uint8_t retVal = 0;
+	uint8_t file_first_sector = RAM_Directory[num];
+	
+	if (RAM_FAT[file_first_sector] == 255) {
+		// file has not been written to yet, write data to first sector
+		retVal = eDisk_WriteSector(buf, file_first_sector);
+		return retVal;
+	}
+	
+	uint8_t new_sector = find_free_sector();
 	
 	if (new_sector != 255) {
 		// at least one sector still available
-		eDisk_WriteSector(buf, new_sector);
+		retVal = eDisk_WriteSector(buf, new_sector);
 		
 		// update FAT
 		append_fat(num, new_sector);
