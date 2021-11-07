@@ -260,7 +260,7 @@ uint8_t eDisk_WriteSector(uint8_t buf[512], uint8_t n){
 uint8_t OS_File_Read( uint8_t num, uint8_t location, uint8_t buf[512]){
 	uint8_t ptr = RAM_Directory[num];
 	ptr = RAM_FAT[ptr];
-	for(int i = 0; i<location ; i++){
+	for(int i = 0; i < location ; i++){
 			if(ptr == 255){
 				return ptr;
 			}
@@ -297,12 +297,27 @@ uint8_t OS_File_Format( void){
 // Outputs: 0 if success 
 // Errors: 255 on disk write failure 
 uint8_t OS_File_Flush(void){
+	//storing data from 254 into buffer
+	uint32_t lastDataofDisk = 0x003FFFE;
+	uint8_t* lastRowData = (uint8_t*)lastDataofDisk;
+	uint8_t buf[512];
+	for(int i = 0; i < 512; i++){
+		buf[i] = *(lastRowData+i);
+	}
+	//eraseing last 2 sectors 254 and 255
+	Flash_Erase(254);
+	//writing old data into 254
+	lastRowData = (uint8_t*)lastDataofDisk;
+	for(int i = 0; i<512; i++){
+		*(lastRowData+i) = buf[i];
+	}
+	// writing directory and FAT into 255
   uint32_t endOfDisk = 0x0003FFFF; 
 	uint8_t* sectorWriteStart = (uint8_t*) endOfDisk;
 	for(int i = 0; i<255; i++){
 		*(sectorWriteStart+i) = RAM_Directory[i];
 	}
-	for(int i = 0; i<255; i++){
+	for(int i = 255; i<512; i++){
 		*(sectorWriteStart+i) = RAM_FAT[i];
 	}
 	return 0;
