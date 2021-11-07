@@ -176,14 +176,36 @@ uint8_t find_free_sector(void){
 	// the last claimed sector on the disk
 	free_sector_index = highest_file_sector + 1; 
 	
-	for (file_num = 0; file_num < num_files; ++file_num) {
-		// ensure that this sector is referenced by a file in the directory
-		if (RAM_Directory[file_num] == free_sector_index) {
-			// increment to the next sector - if that sector is also referenced,
-			// it will be in order of file creation, so next iteration will take care of it
-			++free_sector_index;
+	// used to keep track if free_sector_index changed during any iteration
+	uint8_t dirty;
+	
+	do {
+		dirty = 0;
+		for (file_num = 0; file_num < num_files; ++file_num) {
+			// ensure that this sector is referenced by a file in the directory
+			if (RAM_Directory[file_num] == free_sector_index) {
+				// increment to the next sector - if that sector is also
+				// referenced, the next iteration will take care of it
+				++free_sector_index;
+				++dirty;
+				continue;
+			}
+			
+			// ensure that this sector is not referenced by a sector in the FAT
+			ptr = RAM_Directory[file_num];
+			
+			while (ptr != 255) {
+				if (RAM_FAT[ptr] == free_sector_index) {
+					++free_sector_index;
+					++dirty;
+					continue;
+				}
+				
+				ptr = RAM_FAT[ptr];
+			}
 		}
-	}
+	} while (dirty > 0);
+	
 	return free_sector_index;
 }
 
