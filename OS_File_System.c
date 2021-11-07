@@ -336,27 +336,37 @@ uint8_t OS_File_Format( void){
 // Errors: 255 on disk write failure 
 uint8_t OS_File_Flush(void){
 	//storing data from 254 into buffer
-	uint32_t lastDataofDisk = 0x003FFFE;
-	uint8_t* lastRowData = (uint8_t*)lastDataofDisk;
-	uint8_t buf[512];
-	for(int i = 0; i < 512; i++){
-		buf[i] = *(lastRowData+i);
+	uint32_t lastDataofDisk = 0x3FC00;
+	uint32_t* lastRowData = (uint32_t*)lastDataofDisk;
+	uint32_t buf[64];
+	for(int i = 0; i < 64; i++){
+		buf[i] = *(lastRowData+(i*4));
 	}
-	//eraseing last 2 sectors 254 and 255
+	//erasing last 2 sectors 254 and 255
 	Flash_Erase(254);
-	//writing old data into 254
-	lastRowData = (uint8_t*)lastDataofDisk;
-	for(int i = 0; i<512; i++){
-		*(lastRowData+i) = buf[i];
+	//writing old data back into 254
+	//lastRowData = (uint32_t*)lastDataofDisk;
+	for(int i = 0; i<64; i++){
+		Flash_Write(lastDataofDisk+(i*4), buf[i]);
 	}
 	// writing directory and FAT into 255
-  uint32_t endOfDisk = 0x0003FFFF; 
-	uint8_t* sectorWriteStart = (uint8_t*) endOfDisk;
-	for(int i = 0; i<255; i++){
-		*(sectorWriteStart+i) = RAM_Directory[i];
+  uint32_t endOfDisk = 0x3FF00; 
+	uint32_t* sectorWriteStart = (uint32_t*) endOfDisk;
+	for(int i = 0; i<256; i=i+4){
+		uint32_t data = 0;
+		data |= RAM_Directory[i] & 0x000000FF;
+		data |= (RAM_Directory[i+1] << 8) & 0x0000FF00;
+		data |= (RAM_Directory[i+2] << 16) & 0x00FF0000;
+		data |= (RAM_Directory[i+3] << 24) & 0xFF000000;
+		Flash_Write(endOfDisk+i, data);
 	}
-	for(int i = 255; i<512; i++){
-		*(sectorWriteStart+i) = RAM_FAT[i];
+	for(int i = 0; i<256; i=i+4){
+		uint32_t data = 0;
+		data |= RAM_FAT[i] & 0x000000FF;
+		data |= (RAM_FAT[i+1] << 8) & 0x0000FF00;
+		data |= (RAM_FAT[i+2] << 16) & 0x00FF0000;
+		data |= (RAM_FAT[i+3] << 24) & 0xFF000000;
+		Flash_Write(endOfDisk+i+256, data);
 	}
 	return 0;
 }
